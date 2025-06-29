@@ -54,7 +54,13 @@ def player_init():
           sys.exit()
         elif event.key == pygame.K_RETURN:
           if player != "":
-            init = False
+            if player == "0":
+              draw("?????", 100, height - 200)
+              pygame.display.flip()
+              time.sleep(1)
+              player = ""
+            else:
+              init = False
         elif event.key == pygame.K_BACKSPACE:
           player = player[:-1]
         else:
