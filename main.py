@@ -2,14 +2,18 @@ import pygame
 import random
 import time
 import sys
+import math
+from qiskit import QuantumCircuit, transpile
+from qiskit_aer import AerSimulator
 from pygame.math import Vector2
 from text import *
+from quantum import *
 
 pygame.init()
 
 display_info = pygame.display.Info()
 width, height = display_info.current_w, display_info.current_h
-# width, height = 1500, 500
+# width, height = 1500, 1000
 fps = 60
 clock = pygame.time.Clock()
 
@@ -74,6 +78,8 @@ def player_init():
 def start():
   screen.fill(black)
   
+  global die, lock, locka, roll, score, row_3, row_4, b25, b40, b50
+  
   base = [625, 100]
   basee = [base[0] + 10, base[1] + 10]
   round = 0
@@ -87,9 +93,26 @@ def start():
   b25 = 9
   b40 = 10
   b50 = 11
-  
+  cnt_round = 0
+    
   running = True
   while running:
+    screen.fill(black)
+    player_text = f"Player {round + 1}"
+    player_text_rect = pygame.Rect(width // 2 - 50, 10, 100, 100)
+    write(screen, player_text_rect, player_text, 65, "white", "black", 10)
+    
+    roll_text = f"Roll remaining: {3 - roll}"
+    roll_text_rect = pygame.Rect(width // 2 + 500, height - 250, 100, 100)
+    write(screen, roll_text_rect, roll_text, 65, "white", "black", 10)
+    
+    for i in range(int(player)):
+      tot = 0
+      for j in range(12):
+        if locka[i][j]:
+          tot += score[i][j]
+      lead_rect = pygame.Rect(100, 100 + (100 * i), 100, 100)
+      write(screen, lead_rect, f"Player {i + 1}: {tot}", 65, "white", "black", 10)
     b1 = [Vector2(base[0], base[1]), 
           Vector2(width - base[0], base[1]), 
           Vector2(width - base[0], height - base[1]), 
@@ -126,54 +149,37 @@ def start():
         ]
     pygame.draw.polygon(screen, orange, [(p.x, p.y) for p in b3])
     
-    
     space = 37.5
     
     dice1 = pygame.Rect(width // 2 - 300, height - basee[1] * 2 - 100, 90, 90)
-    if dice1.collidepoint(mouse_pos) and roll != 3 and not(lock[1]) and roll != 0:
+    if lock[1] or roll == 3:
       write(screen, dice1, str(die[1]), 65, "black", "gray69", 10)
     else:
-      if lock[1] or roll == 3:
-        write(screen, dice1, str(die[1]), 65, "black", "gray69", 10)
-      else:
-        write(screen, dice1, str(die[1]), 65, "black", "white", 10)
+      write(screen, dice1, str(die[1]), 65, "black", "white", 10)
     
     dice2 = pygame.Rect(width // 2 - 300 + 90 + space, height - basee[1] * 2 - 100, 90, 90)
-    if dice2.collidepoint(mouse_pos) and roll != 3 and not(lock[2]) and roll != 0:
+    if lock[2] or roll == 3:
       write(screen, dice2, str(die[2]), 65, "black", "gray69", 10)
     else:
-      if lock[2] or roll == 3:
-        write(screen, dice2, str(die[2]), 65, "black", "gray69", 10)
-      else:
-        write(screen, dice2, str(die[2]), 65, "black", "white", 10)
+      write(screen, dice2, str(die[2]), 65, "black", "white", 10)
         
     dice3 = pygame.Rect(width // 2 - 300 + 90 * 2 + space * 2, height - basee[1] * 2 - 100, 90, 90)
-    if dice3.collidepoint(mouse_pos) and roll != 3 and not(lock[3]) and roll != 0:
+    if lock[3] or roll == 3:
       write(screen, dice3, str(die[3]), 65, "black", "gray69", 10)
     else:
-      if lock[3] or roll == 3:
-        write(screen, dice3, str(die[3]), 65, "black", "gray69", 10)
-      else:
-        write(screen, dice3, str(die[3]), 65, "black", "white", 10)
+      write(screen, dice3, str(die[3]), 65, "black", "white", 10)
     
     dice4 = pygame.Rect(width // 2 - 300 + 90 * 3 + space * 3, height - basee[1] * 2 - 100, 90, 90)
-    if dice4.collidepoint(mouse_pos) and roll != 3 and not(lock[4]) and roll != 0:
+    if lock[4] or roll == 3:
       write(screen, dice4, str(die[4]), 65, "black", "gray69", 10)
     else:
-      if lock[4] or roll == 3:
-        write(screen, dice4, str(die[4]), 65, "black", "gray69", 10)
-      else:
-        write(screen, dice4, str(die[4]), 65, "black", "white", 10)
+      write(screen, dice4, str(die[4]), 65, "black", "white", 10)
     
     dice5 = pygame.Rect(width // 2 - 300 + 90 * 4 + space * 4, height - basee[1] * 2 - 100, 90, 90)
-    if dice5.collidepoint(mouse_pos) and roll != 3 and not(lock[5]) and roll != 0:
+    if lock[5] or roll == 3:
       write(screen, dice5, str(die[5]), 65, "black", "gray69", 10)
     else:
-      if lock[5] or roll == 3:
-        write(screen, dice5, str(die[5]), 65, "black", "gray69", 10)
-      else:
-        write(screen, dice5, str(die[5]), 65, "black", "white", 10)
-    
+      write(screen, dice5, str(die[5]), 65, "black", "white", 10)
     
     cnt_pos = [basee[0] + 10, basee[1] + 10]
     cnt_size = [width - cnt_pos[0] - width // 2 - 5, 50]
@@ -332,10 +338,10 @@ def start():
     
     if not(locka[round][b25]):
       score[round][b25] = 0
-      amount = [0 for _ in range(6)]
+      amount = [0 for _ in range(7)]
       two = 0
       three = 0
-      for i in range(1, 6):
+      for i in range(1, 7):
         for j in range(1, 6):
           if die[j] == i:
             amount[i] += 1
@@ -359,10 +365,14 @@ def start():
     
     if not(locka[round][b40]):
       score[round][b40] = 0
-      amount = [die[i] for i in range(1, 6)]
-      amount = sorted(set(amount))
-      if len(amount) == 5 and amount[-1] - amount[0] == 4:
-        score[round][b40] = 0
+      amount = [0 for _ in range(6)]
+      sorted_die = sorted(die)
+      consectutive = True
+      for i in range(2, 6):
+        if sorted_die[i] != sorted_die[i - 1] + 1:
+          consectutive = False
+      if consectutive:
+        score[round][b40] = 40
     cnt_b40 = pygame.Rect(width // 2 + 5, cnt_pos[1] + (cnt_size[1] + space_y) * 9, cnt_size[0], cnt_size[1])
     if cnt_b40.collidepoint(mouse_pos) and roll != 0:
       write(screen, cnt_b40, str(score[round][b40]), 55, "black", "gray69", 10)
@@ -388,6 +398,10 @@ def start():
       else:
         write(screen, cnt_b50, str(score[round][b50]), 55, "black", "white", 10)
 
+    if cnt_round == int(player) * 11:
+      print("Yes")
+      running = False
+      win()
 
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
@@ -400,6 +414,9 @@ def start():
         elif event.key == pygame.K_RSHIFT:
           running = False
           start()
+        elif event.key == pygame.K_r:
+          running = False
+          player_init()
       elif event.type == pygame.MOUSEBUTTONDOWN:
         if roll_button.collidepoint(mouse_pos) and roll != 3:
           cnt = 0
@@ -409,7 +426,7 @@ def start():
             roll += 1
             for i in range(1, 6):
               if not(lock[i]):
-                die[i] = int(random.randint(1, 6))
+                die[i] = roll_quantum_dice(6, 1)
         elif dice1.collidepoint(mouse_pos) and roll != 3 and roll != 0:
           if lock[1]:
             lock[1] = 0
@@ -442,6 +459,7 @@ def start():
             roll = 0
             die = [0 for _ in range(6)]
             lock = [0 for _ in range(6)]
+            cnt_round += 1
         elif cnt_2.collidepoint(mouse_pos) and roll != 0:
           if not(locka[round][2]):
             locka[round][2] = 1
@@ -449,6 +467,7 @@ def start():
             roll = 0
             die = [0 for _ in range(6)]
             lock = [0 for _ in range(6)]
+            cnt_round += 1
         elif cnt_3.collidepoint(mouse_pos) and roll != 0:
           if not(locka[round][3]):
             locka[round][3] = 1
@@ -456,6 +475,7 @@ def start():
             roll = 0
             die = [0 for _ in range(6)]
             lock = [0 for _ in range(6)]
+            cnt_round += 1
         elif cnt_4.collidepoint(mouse_pos) and roll != 0:
           if not(locka[round][4]):
             locka[round][4] = 1
@@ -463,6 +483,7 @@ def start():
             roll = 0
             die = [0 for _ in range(6)]
             lock = [0 for _ in range(6)]
+            cnt_round += 1
         elif cnt_5.collidepoint(mouse_pos) and roll != 0:
           if not(locka[round][5]):
             locka[round][5] = 1
@@ -470,6 +491,7 @@ def start():
             roll = 0
             die = [0 for _ in range(6)]
             lock = [0 for _ in range(6)]
+            cnt_round += 1
         elif cnt_6.collidepoint(mouse_pos) and roll != 0:
           if not(locka[round][6]):
             locka[round][6] = 1
@@ -477,6 +499,7 @@ def start():
             roll = 0
             die = [0 for _ in range(6)]
             lock = [0 for _ in range(6)]
+            cnt_round += 1
         elif cnt_row_3.collidepoint(mouse_pos) and roll != 0:
           if not(locka[round][row_3]):
             locka[round][row_3] = 1
@@ -484,6 +507,7 @@ def start():
             roll = 0
             die = [0 for _ in range(6)]
             lock = [0 for _ in range(6)]
+            cnt_round += 1
         elif cnt_row_4.collidepoint(mouse_pos) and roll != 0:
           if not(locka[round][row_4]):
             locka[round][row_4] = 1
@@ -491,6 +515,7 @@ def start():
             roll = 0
             die = [0 for _ in range(6)]
             lock = [0 for _ in range(6)]
+            cnt_round += 1
         elif cnt_b25.collidepoint(mouse_pos) and roll != 0:
           if not(locka[round][b25]):
             locka[round][b25] = 1
@@ -498,6 +523,7 @@ def start():
             roll = 0
             die = [0 for _ in range(6)]
             lock = [0 for _ in range(6)]
+            cnt_round += 1
         elif cnt_b40.collidepoint(mouse_pos) and roll != 0:
           if not(locka[round][b40]):
             locka[round][b40] = 1
@@ -505,6 +531,7 @@ def start():
             roll = 0
             die = [0 for _ in range(6)]
             lock = [0 for _ in range(6)]
+            cnt_round += 1
         elif cnt_b50.collidepoint(mouse_pos) and roll != 0:
           if not(locka[round][b50]):
             locka[round][b50] = 1
@@ -512,22 +539,69 @@ def start():
             roll = 0
             die = [0 for _ in range(6)]
             lock = [0 for _ in range(6)]
+            cnt_round += 1
   
-    pygame.display.update()
-    
-running = True
-while running:
+    pygame.display.flip()
+  pygame.display.flip()
+
+def win():
   screen.fill(black)
-  
-  player_init()
-  
-  for event in pygame.event.get():
-    if event.type == pygame.QUIT:
-      pygame.quit()
-      sys.exit()
-    elif event.type == pygame.KEYDOWN:
-      if event.key == pygame.K_ESCAPE:
+  running = True
+  while running:
+    screen.fill(black)
+    winner = []
+    for i in range(int(player)):
+      tot = 0
+      for j in range(12):
+        tot += score[i][j]
+      winner.append((i + 1, tot))
+    winner.sort(key = lambda x : x[1], reverse = True)
+    max_score = 300
+    i = 0
+    num_i = 1
+    for a, b in winner:
+      if max_score != b:
+        max_score = b
+        i += 1
+      draw(f"{i}: Player {a} | Score: {b}", 75, 100 * num_i)
+      num_i += 1
+    
+    mouse_pos = pygame.mouse.get_pos()
+    
+    home_size = [200, 100]
+    home_pos = [100, height // 2]
+    home = pygame.Rect(home_pos[0], home_pos[1], home_size[0], home_size[1])
+    if home.collidepoint(mouse_pos):
+      write(screen, home, "Home", 65, "black", "gray69", 10)
+    else:
+      write(screen, home, "Home", 65, "black", "white", 10)
+
+    again_size = home_size
+    again_pos = [100, home_pos[1] + 150]
+    again = pygame.Rect(again_pos[0], again_pos[1], again_size[0], again_size[1])
+    if again.collidepoint(mouse_pos):
+      write(screen, again, "Again", 65, "black", "gray69", 10)
+    else:
+      write(screen, again, "Again", 65, "black", "white", 10)
+        
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
         pygame.quit()
         sys.exit()
-
+      elif event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_ESCAPE:
+          pygame.quit()
+          sys.exit()
+      elif event.type == pygame.MOUSEBUTTONDOWN:
+        if home.collidepoint(mouse_pos):
+          running = False
+          player_init()
+        elif again.collidepoint(mouse_pos):
+          running = False
+          start()
+    pygame.display.flip()
   pygame.display.flip()
+        
+player_init()
+
+pygame.display.flip()
